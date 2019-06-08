@@ -102,7 +102,6 @@ class RTMClient(object):
         removed at anytime.
     """
 
-    _callbacks = collections.defaultdict(list)
 
     def __init__(
         self,
@@ -118,6 +117,7 @@ class RTMClient(object):
         ping_interval: Optional[int] = 30,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ):
+        self._callbacks = collections.defaultdict(list)
         self.token = token
         self.run_async = run_async
         self.auto_reconnect = auto_reconnect
@@ -136,20 +136,6 @@ class RTMClient(object):
         self._connection_attempts = 0
         self._stopped = False
 
-    @staticmethod
-    def run_on(*, event: str):
-        """A decorator to store and link a callback to an event."""
-
-        def decorator(callback):
-            @functools.wraps(callback)
-            def decorator_wrapper():
-                RTMClient.on(event=event, callback=callback)
-
-            return decorator_wrapper()
-
-        return decorator
-
-    @classmethod
     def on(cls, *, event: str, callback: Callable):
         """Stores and links the callback(s) to the event.
 
@@ -197,9 +183,9 @@ class RTMClient(object):
         future = asyncio.ensure_future(self._connect_and_read(), loop=self._event_loop)
 
         if self.run_async or self._event_loop.is_running():
-            return future
+            assert False
 
-        return self._event_loop.run_until_complete(future)
+        return future
 
     def stop(self):
         """Closes the websocket connection and ensures it won't reconnect."""
